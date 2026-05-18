@@ -1,0 +1,21 @@
+{
+  "name": "memoriai-civica",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Milan civic memory agent with selective disclosure crystals",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.8.0",
+    "@noble/hashes": "^1.7.0",
+    "@noble/ciphers": "^1.2.0",
+    "cborg": "^4.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.100.0",
+    "typescript": "^5.7.0",
+    "@cloudflare/workers-types": "^4.20250224.0"
+  }
+}
