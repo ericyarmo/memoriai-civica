@@ -75,7 +75,7 @@ src/
     demographics.ts # Milan CKAN queries (88 NILs, 2011-2023)
 ```
 
-One Cloudflare Worker. One deployment. 12 source files. 56KB gzipped.
+One Cloudflare Worker. One deployment. 12 source files. ~58KB gzipped.
 
 ## Context
 

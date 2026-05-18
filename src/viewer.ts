@@ -201,6 +201,8 @@ export const HTML = `<!DOCTYPE html>
     color: var(--accent2);
   }
   .role-btn .role-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+  .role-btn .role-desc { display: block; font-size: 9px; color: var(--text2); margin-top: 2px; line-height: 1.3; }
+  .role-btn.active .role-desc { color: var(--accent2); opacity: 0.7; }
 
   /* Frames */
   .frames { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -315,7 +317,7 @@ export const HTML = `<!DOCTYPE html>
 <body>
   <div class="header">
     <h1>memoria civica</h1>
-    <span class="subtitle">climate intelligence for Milan -- selective disclosure via memory crystals</span>
+    <span class="subtitle">AI queries live Milan data. The report it builds shows different things to different people.</span>
   </div>
 
   <div class="main">
@@ -333,15 +335,17 @@ export const HTML = `<!DOCTYPE html>
           <div style="font-size:32px;margin-bottom:12px;opacity:0.3">&#9670;</div>
           <div>No crystal yet.</div>
           <div style="margin-top:8px;font-size:11px">
-            Ask the agent to analyze Milan data.<br>
-            It will forge a memory crystal with<br>
-            selective disclosure frames.
+            Ask a question about Milan's air, traffic,<br>
+            trees, or neighborhoods. The agent will<br>
+            build a report that reveals different<br>
+            content depending on who's reading it.
           </div>
         </div>
       </div>
       <div id="crystalContent" style="display:none">
         <div class="crystal-header">
           <h2 id="crystalTitle">Memory Crystal</h2>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5">One file. Same bytes. Toggle roles to see how different keys reveal different content.</div>
           <div class="crystal-stats">
             <span>ID: <span class="stat-val" id="crystalId">--</span></span>
             <span>Size: <span class="stat-val" id="crystalSize">--</span></span>
@@ -351,12 +355,15 @@ export const HTML = `<!DOCTYPE html>
         <div class="role-selector">
           <button class="role-btn active" onclick="setRole('public')" id="btn-public">
             <span class="role-icon">&#127758;</span> Public
+            <span class="role-desc">What any citizen sees</span>
           </button>
           <button class="role-btn" onclick="setRole('planner')" id="btn-planner">
             <span class="role-icon">&#127959;</span> Planner
+            <span class="role-desc">What a city official unlocks</span>
           </button>
           <button class="role-btn" onclick="setRole('researcher')" id="btn-researcher">
             <span class="role-icon">&#128300;</span> Researcher
+            <span class="role-desc">What an academic unlocks</span>
           </button>
         </div>
         <div class="frames" id="framesContainer"></div>
@@ -508,7 +515,12 @@ function renderFrames(frames) {
     if (frame.status === 'viewable' && frame.content) {
       body.innerHTML = renderContent(frame.content);
     } else {
-      body.innerHTML = '<div class="frame-sealed-msg">Encrypted. Requires ' + frame.label + ' key to decrypt.</div>';
+      const sealedLabels = {
+        public: 'This section is open to everyone.',
+        planner: 'This section is locked. Only city planners can read it.',
+        researcher: 'This section is locked. Only academic researchers can read it.'
+      };
+      body.innerHTML = '<div class="frame-sealed-msg">' + (sealedLabels[frame.label] || ('Locked. Requires the ' + frame.label + ' key.')) + '</div>';
     }
 
     card.appendChild(header);

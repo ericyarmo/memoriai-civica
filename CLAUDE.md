@@ -16,7 +16,7 @@ npx wrangler dev                 # http://localhost:8787
 
 ## Architecture
 
-One Cloudflare Worker. 12 source files. 56KB gzipped.
+One Cloudflare Worker. 12 source files. ~58KB gzipped.
 
 ```
 src/
@@ -79,9 +79,12 @@ npx wrangler deploy
 
 ## What's next (hackathon remaining work)
 
-- [ ] Test with live Gemini API key
-- [ ] Tune system prompt after seeing real tool results
-- [ ] Add error handling for API timeouts / empty responses
+- [x] Test with live Gemini API key
+- [x] Tune system prompt after seeing real tool results (cross-dataset reasoning directives)
+- [x] Add error handling for API timeouts / empty responses (tool try/catch, candidate guard)
+- [x] Fix multi-tool query crash (candidate.content undefined)
+- [x] Fix text accumulation across tool rounds
+- [x] Viewer copy overhaul (accessible role descriptions, sealed messages, intro text)
 - [ ] Crystal download/export button in viewer
 - [ ] Cover image + submission materials
 - [ ] Polish unlock animation (glass-shatter or frosted-glass clear effect)

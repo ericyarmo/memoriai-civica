@@ -58,10 +58,15 @@ Gemini 2.5 Flash with function calling. The tool-call loop:
 
 1. Send messages + tool declarations to Gemini
 2. If Gemini returns function calls, execute them via `tools.ts`
-3. Add results to conversation, loop back to Gemini
-4. Repeat up to 8 rounds until Gemini returns a text response
+3. Push the full model response (text + function calls) back into conversation contents
+4. Accumulate any text the model produced alongside function calls into `collectedText[]`
+5. Add tool results to conversation, loop back to Gemini
+6. Repeat up to 8 rounds until Gemini returns a text-only response
+7. Return all accumulated text (intermediate analysis + final response)
 
-`tools.ts` maps each tool name to a data module function. It also handles `build_crystal`, which takes the agent's structured findings and builds a .mem crystal via `crystal.ts`.
+The text accumulation (steps 3-4, 7) is important: Gemini often produces its substantive analysis in the same turn as a `build_crystal` function call. Without accumulation, only the final turn's text (often a terse "crystal ready") would be returned.
+
+`tools.ts` maps each tool name to a data module function. It also handles `build_crystal`, which takes the agent's structured findings and builds a .mem crystal via `crystal.ts`. Individual tool calls are wrapped in try/catch so one failure doesn't crash the round.
 
 Tool results are trimmed before returning to Gemini (sample records, not full datasets) to stay within token limits.
 
@@ -110,9 +115,9 @@ Single HTML page served by the Worker. Split layout:
 
 - **Left panel**: Chat interface. Messages, input, loading state.
 - **Right panel**: Crystal viewer. Appears when a crystal is forged.
-  - Header: receipt ID, size, frame count
-  - Role selector: Public / Planner / Researcher
-  - Frame cards: expand/collapse with content or "sealed" state
+  - Header: receipt ID, size, frame count, intro text ("One file. Same bytes. Toggle roles...")
+  - Role selector: Public / Planner / Researcher with audience descriptions ("What any citizen sees", etc.)
+  - Frame cards: expand/collapse with content or human-readable sealed message ("This section is locked. Only city planners can read it.")
   - Unlock animation on role switch
 
 Role switching calls `/api/crystal/decrypt` server-side. The server finds the matching stanza for the selected role, unwraps the frame key, decrypts the content, and returns the result.
