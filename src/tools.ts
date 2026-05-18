@@ -2,7 +2,7 @@
 
 import { getAirQuality } from './data/air-quality';
 import { getAreaC, getAreaCHistorical } from './data/area-c';
-import { getTrees, getTreeCount } from './data/trees';
+import { getTrees, getTreeCount, getTreeCountsByMunicipio } from './data/trees';
 import { getDemographics } from './data/demographics';
 import { buildCrystal, type FrameInput } from './crystal';
 
@@ -41,7 +41,7 @@ export const toolDeclarations = [
   },
   {
     name: 'query_trees',
-    description: 'Get tree inventory data for Milan. 251,000+ georeferenced municipal trees with genus, species, trunk diameter, crown diameter, and height. Can filter by municipio (1-9) or genus name. Use this for urban green infrastructure, environmental equity, and heat island analysis.',
+    description: 'Get tree inventory data for Milan. 251,000+ georeferenced municipal trees with genus, species, trunk diameter, crown diameter, and height. Can filter by municipio (1-9) or genus name. Set compare_municipi=true to get tree counts for ALL 9 municipi in one call (useful for equity/per-capita comparisons). Use this for urban green infrastructure, environmental equity, and heat island analysis.',
     parameters: {
       type: 'object',
       properties: {
@@ -56,6 +56,10 @@ export const toolDeclarations = [
         limit: {
           type: 'integer',
           description: 'Max records to return (default 200)',
+        },
+        compare_municipi: {
+          type: 'boolean',
+          description: 'If true, return tree counts for all 9 municipi (ignores other filters). Use this for cross-district comparisons.',
         },
       },
     },
@@ -148,6 +152,17 @@ export async function executeTool(
       }
 
       case 'query_trees': {
+        // Compare all municipi mode
+        if (args.compare_municipi) {
+          const counts = await getTreeCountsByMunicipio();
+          toolResultsCache.treeCounts = counts;
+          return {
+            mode: 'compare_municipi',
+            treesByMunicipio: counts,
+            totalTrees: Object.values(counts).reduce((a, b) => a + b, 0),
+          };
+        }
+
         const municipio = args.municipio ? Number(args.municipio) : undefined;
         const genus = args.genus ? String(args.genus) : undefined;
         const limit = Number(args.limit) || 200;

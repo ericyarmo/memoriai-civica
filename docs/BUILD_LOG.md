@@ -206,3 +206,69 @@ All changes aimed at making the crystal concept accessible to non-technical user
 ### Build result
 - **Bundle size**: 225 KB raw, 57.5 KB gzipped (up ~1.5 KB from viewer copy additions)
 - **Zero errors**
+
+---
+
+## Session 3: Atmosphere, Narrator Voice, Data Fix (May 18, ~5:30-6:30 PM CET)
+
+**Goal:** Add emotional/narrative framing without being cinematic. Fix the "green cover per person" question that was punting. Add clickable prompt suggestions.
+
+### Design principle
+Archival, infrastructural, geographic, consequential. Not gamified, not startup-polished, not sci-fi cosplay. The interface should feel like entering a living civic condition, not opening a dashboard.
+
+### Scene-setter (crystal empty state)
+Replaced generic "No crystal yet" placeholder with documentary framing:
+
+> *Milan sits in the Po Valley. The mountains trap the air. For 14 years, the city has been running an experiment: can you price cars out of the center and make people breathe easier?*
+>
+> Ask a question. The data remembers.
+
+Under 4 lines. Establishes stakes and geography before the user asks anything.
+
+### Role toggle narrative
+Added a subtle one-line epistemic annotation that fades in (200ms) on role switch above the crystal frames:
+- Public: "What every Milanese can see."
+- Planner: "What the city must optimize."
+- Researcher: "What can be verified independently."
+
+Styled as italic, low-opacity text. Archival annotation, not onboarding copy.
+
+### Agent narrator voice (system prompt)
+Added guidance to open each response with one grounded, geographic, human-scale sentence before the analytical headline. Uses real landmarks and neighborhoods.
+
+Examples from live output:
+- "Around the historic Duomo and Galleria Vittorio Emanuele II, the daily rhythm of traffic has been deliberately altered for over a decade..."
+- "In the heart of Milan, where the Duomo stands sentinel..."
+
+Explicit tone guidance: "investigative researcher, museum placard, documentary narrator. Never startup marketing, never climate doomposting, never sci-fi."
+
+### Crystal arrival animation
+- Diamond icon pulses once on crystal generation (0.8s ease-out)
+- Receipt ID types in character-by-character (30ms/char, ~500ms total)
+- Frames reveal sequentially with 200ms stagger between each
+- Crystal header, role selector, and narrative cascade in over ~400ms
+- No spinning loaders or excessive motion
+
+### Clickable prompt suggestions
+Greeting message suggested questions render as clickable links (dotted underline, accent color). Clicking sends the prompt directly.
+- Uses event delegation on messages container (not inline onclick) for reliability
+- Regex detects bullet-point questions ending in `?`, handles optional smart quotes
+- Links are one-time use: clicking one removes all prompt links from the greeting
+- `href="#"` with `preventDefault()` for proper browser interactivity
+
+### Data fix: green cover per person
+The "Which neighborhoods have the least green cover per person?" prompt was causing the agent to apologize about data resolution (trees are per-municipio, demographics per-NIL) and ask the user if municipio-level was OK.
+
+Fixed in three places:
+1. **`trees.ts`**: Added `getTreeCountsByMunicipio()` -- one SQL `GROUP BY` query that returns all 9 municipio tree counts in a single call
+2. **`tools.ts`**: Added `compare_municipi` parameter to `query_trees` tool. When true, returns tree counts for all 9 municipi instead of individual tree records
+3. **`gemini.ts`**: Added DATA RESOLUTION section to system prompt: "If the user asks about neighborhoods, answer at the municipio level. DO NOT apologize about data resolution... NEVER punt a question."
+
+### Other fixes
+- **max_output_tokens**: Bumped from 4096 to 8192. Complex multi-dataset queries with crystal building were hitting the token limit
+- **Empty candidate fallback**: When Gemini returns no content after tool execution, now returns collected text from earlier rounds instead of error message
+
+### Build result
+- **Bundle size**: 232 KB raw, 59.9 KB gzipped
+- **Zero errors**
+- All 3 suggested prompts tested and working end-to-end with crystals

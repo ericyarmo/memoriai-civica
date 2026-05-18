@@ -155,7 +155,20 @@ export const HTML = `<!DOCTYPE html>
     padding: 32px;
     color: var(--text2);
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.8;
+  }
+  .crystal-empty .scene {
+    font-style: italic;
+    color: var(--text);
+    opacity: 0.6;
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .crystal-empty .scene-cta {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 12px;
   }
   .crystal-header {
     padding: 16px;
@@ -203,6 +216,19 @@ export const HTML = `<!DOCTYPE html>
   .role-btn .role-icon { font-size: 16px; display: block; margin-bottom: 2px; }
   .role-btn .role-desc { display: block; font-size: 9px; color: var(--text2); margin-top: 2px; line-height: 1.3; }
   .role-btn.active .role-desc { color: var(--accent2); opacity: 0.7; }
+
+  /* Role narrative */
+  .role-narrative {
+    padding: 6px 16px 2px;
+    font-size: 10px;
+    font-style: italic;
+    color: var(--text2);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    letter-spacing: 0.3px;
+    min-height: 22px;
+  }
+  .role-narrative.visible { opacity: 0.7; }
 
   /* Frames */
   .frames { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -290,6 +316,44 @@ export const HTML = `<!DOCTYPE html>
     animation: seal-fade 0.4s ease-out;
   }
 
+  /* Crystal arrival */
+  @keyframes crystal-arrive {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes crystal-pulse {
+    0% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.15); }
+    100% { opacity: 0.3; transform: scale(1); }
+  }
+  .crystal-arriving .crystal-header { animation: crystal-arrive 0.4s ease-out; }
+  .crystal-arriving .role-selector { animation: crystal-arrive 0.4s ease-out 0.15s both; }
+  .crystal-arriving .role-narrative { animation: crystal-arrive 0.4s ease-out 0.25s both; }
+  .crystal-icon-pulse { animation: crystal-pulse 0.8s ease-out; }
+  .frame-card.frame-entering {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .frame-card.frame-entered {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Prompt links */
+  .prompt-link {
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    transition: color 0.2s, text-decoration-color 0.2s;
+  }
+  .prompt-link:hover {
+    color: var(--green);
+    text-decoration-style: solid;
+  }
+
   /* Loading */
   .loading-dots::after {
     content: '';
@@ -332,20 +396,24 @@ export const HTML = `<!DOCTYPE html>
     <div class="crystal-panel" id="crystalPanel">
       <div class="crystal-empty" id="crystalEmpty">
         <div>
-          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">&#9670;</div>
-          <div>No crystal yet.</div>
-          <div style="margin-top:8px;font-size:11px">
-            Ask a question about Milan's air, traffic,<br>
-            trees, or neighborhoods. The agent will<br>
-            build a report that reveals different<br>
-            content depending on who's reading it.
+          <div style="font-size:28px;margin-bottom:16px;opacity:0.2">&#9670;</div>
+          <div class="scene">
+            Milan sits in the Po Valley.<br>
+            The mountains trap the air.<br>
+            For 14 years, the city has been running<br>
+            an experiment: can you price cars out of<br>
+            the center and make people breathe easier?
           </div>
+          <div class="scene-cta">Ask a question. The data remembers.</div>
         </div>
       </div>
       <div id="crystalContent" style="display:none">
         <div class="crystal-header">
-          <h2 id="crystalTitle">Memory Crystal</h2>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5">One file. Same bytes. Toggle roles to see how different keys reveal different content.</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span id="crystalIcon" style="font-size:18px;opacity:0.3">&#9670;</span>
+            <h2 id="crystalTitle" style="margin-bottom:0">Memory Crystal</h2>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5">One file. Same bytes. Different keys reveal different content.</div>
           <div class="crystal-stats">
             <span>ID: <span class="stat-val" id="crystalId">--</span></span>
             <span>Size: <span class="stat-val" id="crystalSize">--</span></span>
@@ -366,6 +434,7 @@ export const HTML = `<!DOCTYPE html>
             <span class="role-desc">What an academic unlocks</span>
           </button>
         </div>
+        <div class="role-narrative" id="roleNarrative"></div>
         <div class="frames" id="framesContainer"></div>
       </div>
     </div>
@@ -445,18 +514,63 @@ function formatMarkdown(text) {
   if (!text) return '';
   return text
     .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
-    .replace(/\\n/g, '<br>');
+    .replace(/\\n/g, '<br>')
+    .replace(/[*\\-]\\s+[\\u201c"]*([A-Z][^<]*\\?)[\\u201d"]*/g, function(match, question) {
+      // Turn bullet-point questions into clickable prompt links
+      var q = question.trim();
+      return '<a href="#" class="prompt-link" data-prompt="' + q.replace(/"/g, '&quot;') + '">' + q + '</a>';
+    });
 }
+
+// Event delegation for prompt links (more reliable than inline onclick)
+messagesEl.addEventListener('click', function(e) {
+  var link = e.target.closest('.prompt-link');
+  if (!link || sendBtn.disabled) return;
+  e.preventDefault();
+  var text = link.dataset.prompt;
+  if (!text) return;
+  // Remove all prompt links (one-time use)
+  document.querySelectorAll('.prompt-link').forEach(function(el) {
+    var span = document.createTextNode(el.textContent);
+    el.replaceWith(span);
+  });
+  addMsg('user', text);
+  doChat(text);
+});
 
 // Crystal viewer
 function showCrystal(crystal) {
   document.getElementById('crystalEmpty').style.display = 'none';
-  document.getElementById('crystalContent').style.display = 'block';
-  document.getElementById('crystalId').textContent = crystal.receiptId.slice(0, 12) + '...';
+  var content = document.getElementById('crystalContent');
+  content.style.display = 'block';
+  content.classList.add('crystal-arriving');
+  setTimeout(function() { content.classList.remove('crystal-arriving'); }, 1500);
+
+  // Icon pulse
+  var icon = document.getElementById('crystalIcon');
+  icon.classList.add('crystal-icon-pulse');
+  setTimeout(function() { icon.classList.remove('crystal-icon-pulse'); }, 800);
+
+  // Typewriter receipt ID
+  var idEl = document.getElementById('crystalId');
+  var fullId = crystal.receiptId.slice(0, 16);
+  idEl.textContent = '';
+  for (var i = 0; i <= fullId.length; i++) {
+    (function(idx) {
+      setTimeout(function() { idEl.textContent = fullId.slice(0, idx) + (idx < fullId.length ? '_' : ''); }, idx * 30);
+    })(i);
+  }
+
   document.getElementById('crystalSize').textContent = crystal.memSize + ' B';
   document.getElementById('crystalFrames').textContent = crystal.frames.length;
   setRole('public');
 }
+
+var roleNarratives = {
+  public: 'What every Milanese can see.',
+  planner: 'What the city must optimize.',
+  researcher: 'What can be verified independently.'
+};
 
 async function setRole(role) {
   currentRole = role;
@@ -464,6 +578,14 @@ async function setRole(role) {
   // Update buttons
   document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('btn-' + role).classList.add('active');
+
+  // Update narrative
+  var narEl = document.getElementById('roleNarrative');
+  narEl.classList.remove('visible');
+  setTimeout(function() {
+    narEl.textContent = roleNarratives[role] || '';
+    narEl.classList.add('visible');
+  }, 150);
 
   if (!crystalData) return;
 
@@ -488,20 +610,30 @@ function renderFrames(frames) {
   });
 
   container.innerHTML = '';
+  var isFirstRender = Object.keys(prevStates).length === 0;
 
-  for (const frame of frames) {
-    const card = document.createElement('div');
+  for (var fi = 0; fi < frames.length; fi++) {
+    var frame = frames[fi];
+    var card = document.createElement('div');
     card.className = 'frame-card ' + frame.status;
     card.dataset.label = frame.label;
 
-    // Detect transition for animation
-    const prev = prevStates[frame.label];
-    if (prev && prev !== frame.status) {
-      card.classList.add(frame.status === 'viewable' ? 'just-unlocked' : 'just-sealed');
-      setTimeout(() => card.classList.remove('just-unlocked', 'just-sealed'), 800);
+    // Sequential entrance on first render
+    if (isFirstRender) {
+      card.classList.add('frame-entering');
+      (function(c, delay) {
+        setTimeout(function() { c.classList.remove('frame-entering'); c.classList.add('frame-entered'); }, delay);
+      })(card, 400 + fi * 200);
     }
 
-    const header = document.createElement('div');
+    // Detect transition for animation on role switch
+    var prev = prevStates[frame.label];
+    if (prev && prev !== frame.status) {
+      card.classList.add(frame.status === 'viewable' ? 'just-unlocked' : 'just-sealed');
+      (function(c) { setTimeout(function() { c.classList.remove('just-unlocked', 'just-sealed'); }, 800); })(card);
+    }
+
+    var header = document.createElement('div');
     header.className = 'frame-header';
     header.innerHTML =
       '<span class="frame-label">' + frame.label + '</span>' +
@@ -509,13 +641,13 @@ function renderFrames(frames) {
       (frame.status === 'viewable' ? '&#128275; VIEWABLE' : '&#128274; SEALED') +
       '</span>';
 
-    const body = document.createElement('div');
+    var body = document.createElement('div');
     body.className = 'frame-body';
 
     if (frame.status === 'viewable' && frame.content) {
       body.innerHTML = renderContent(frame.content);
     } else {
-      const sealedLabels = {
+      var sealedLabels = {
         public: 'This section is open to everyone.',
         planner: 'This section is locked. Only city planners can read it.',
         researcher: 'This section is locked. Only academic researchers can read it.'

@@ -16,7 +16,7 @@ npx wrangler dev                 # http://localhost:8787
 
 ## Architecture
 
-One Cloudflare Worker. 12 source files. ~58KB gzipped.
+One Cloudflare Worker. 12 source files. ~60KB gzipped.
 
 ```
 src/
@@ -85,7 +85,12 @@ npx wrangler deploy
 - [x] Fix multi-tool query crash (candidate.content undefined)
 - [x] Fix text accumulation across tool rounds
 - [x] Viewer copy overhaul (accessible role descriptions, sealed messages, intro text)
+- [x] Scene-setter empty state (Po Valley documentary framing)
+- [x] Role toggle narrative annotations
+- [x] Agent narrator voice (geographic opening sentences)
+- [x] Crystal arrival animation (icon pulse, typewriter ID, sequential frames)
+- [x] Clickable prompt suggestions in greeting
+- [x] Green cover per person data fix (compare_municipi SQL query)
 - [ ] Crystal download/export button in viewer
 - [ ] Cover image + submission materials
-- [ ] Polish unlock animation (glass-shatter or frosted-glass clear effect)
 - [ ] README demo screenshot

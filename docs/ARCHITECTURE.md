@@ -113,12 +113,15 @@ Demo uses 3 hardcoded keypairs (author, planner, researcher) derived from known 
 
 Single HTML page served by the Worker. Split layout:
 
-- **Left panel**: Chat interface. Messages, input, loading state.
-- **Right panel**: Crystal viewer. Appears when a crystal is forged.
-  - Header: receipt ID, size, frame count, intro text ("One file. Same bytes. Toggle roles...")
-  - Role selector: Public / Planner / Researcher with audience descriptions ("What any citizen sees", etc.)
-  - Frame cards: expand/collapse with content or human-readable sealed message ("This section is locked. Only city planners can read it.")
-  - Unlock animation on role switch
+- **Left panel**: Chat interface. Messages, input, loading state. Greeting includes clickable prompt suggestions (event delegation, one-time use).
+- **Right panel**: Crystal viewer.
+  - Empty state: documentary scene-setter (Po Valley geography, Area C experiment)
+  - On crystal arrival: icon pulse, typewriter receipt ID, sequential frame reveal
+  - Header: receipt ID, size, frame count
+  - Role selector: Public / Planner / Researcher with audience descriptions
+  - Role narrative: subtle epistemic annotation that fades in on role switch ("What every Milanese can see." / "What the city must optimize." / "What can be verified independently.")
+  - Frame cards: expand/collapse with content or human-readable sealed message
+  - Unlock/seal animations on role switch
 
 Role switching calls `/api/crystal/decrypt` server-side. The server finds the matching stanza for the selected role, unwraps the frame key, decrypts the content, and returns the result.
 

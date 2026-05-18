@@ -80,3 +80,17 @@ export async function getTreeCount(municipio: number): Promise<number> {
   const data = await resp.json() as { result: { records: Array<{ count: number }> } };
   return data.result?.records?.[0]?.count ?? 0;
 }
+
+// Get tree counts for ALL municipi in one query
+export async function getTreeCountsByMunicipio(): Promise<Record<number, number>> {
+  const url = 'https://dati.comune.milano.it/api/3/action/datastore_search_sql';
+  const sql = `SELECT municipio, COUNT(*) as count FROM "${RESOURCE_ID}" GROUP BY municipio ORDER BY municipio`;
+  const resp = await fetch(`${url}?sql=${encodeURIComponent(sql)}`);
+  if (!resp.ok) return {};
+  const data = await resp.json() as { result: { records: Array<{ municipio: number; count: number }> } };
+  const counts: Record<number, number> = {};
+  for (const r of data.result?.records ?? []) {
+    counts[r.municipio] = Number(r.count);
+  }
+  return counts;
+}
