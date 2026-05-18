@@ -268,7 +268,14 @@ Fixed in three places:
 - **max_output_tokens**: Bumped from 4096 to 8192. Complex multi-dataset queries with crystal building were hitting the token limit
 - **Empty candidate fallback**: When Gemini returns no content after tool execution, now returns collected text from earlier rounds instead of error message
 
+### Agent self-explanation
+Added WHAT A CRYSTAL ACTUALLY IS block to system prompt so the agent can explain the crypto when asked conceptual questions like "explain what a memory crystal is" or "why is this useful for municipal data." Without this, the agent described crystals as "three views" -- missing the entire cryptographic selective disclosure story. Now it explains Ed25519, X25519, XChaCha20-Poly1305, deterministic encryption, and content addressing. Key line: "No server decides access. No permission system. The math does."
+
+### Deployment
+Deployed to Cloudflare Workers: `https://memoriai-civica.getstreams.workers.dev`
+
 ### Build result
-- **Bundle size**: 232 KB raw, 59.9 KB gzipped
+- **Bundle size**: 233 KB raw, 60.3 KB gzipped
 - **Zero errors**
 - All 3 suggested prompts tested and working end-to-end with crystals
+- Conceptual questions about crystals produce accurate crypto explanations
